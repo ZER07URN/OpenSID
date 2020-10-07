@@ -1,13 +1,53 @@
 <?php if (!defined('BASEPATH')) exit('No direct script access allowed');
+/*
+ *  File ini:
+ *
+ * Controller untuk modul Keuangan
+ *
+ * donjo-app/controllers/Keuangan.php
+ *
+ */
+/*
+ *  File ini bagian dari:
+ *
+ * OpenSID
+ *
+ * Sistem informasi desa sumber terbuka untuk memajukan desa
+ *
+ * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
+ *
+ * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ *
+ * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
+ * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
+ * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
+ * asal tunduk pada syarat berikut:
+ *
+ * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
+ * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
+ * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
+ *
+ * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
+ * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
+ * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
+ *
+ * @package	OpenSID
+ * @author	Tim Pengembang OpenDesa
+ * @copyright	Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright	Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license	http://www.gnu.org/licenses/gpl.html	GPL V3
+ * @link 	https://github.com/OpenSID/OpenSID
+ */
 
 class Keuangan extends Admin_Controller {
 
 	public function __construct()
 	{
 		parent::__construct();
-		session_start();
 		$this->load->model('keuangan_model');
-		$this->load->model('header_model');
+
+		$this->load->model('keuangan_grafik_model');
 		$this->modul_ini = 201;
 	}
 
@@ -24,25 +64,10 @@ class Keuangan extends Admin_Controller {
 	public function laporan()
 	{
 		$data['tahun_anggaran'] = $this->keuangan_model->list_tahun_anggaran();
-		$sess = array(
-			'set_tahun' => $data['tahun_anggaran'][0],
-			'set_semester' => 1
-		);
-		$this->session->set_userdata( $sess );
-		$data['id_keuangan_master'] = $this->keuangan_model->data_id_keuangan_master();
 
-		$data['pendapatan_desa'] = $this->keuangan_model->pendapatan_desa($data['id_keuangan_master']);
-		$data['realisasi_pendapatan_desa'] = $this->keuangan_model->realisasi_pendapatan_desa($data['id_keuangan_master']);
-		// print_r($data['pendapatan_desa']);die();
-		$header = $this->header_model->get_data();
-		$nav['act_sub'] = 203;
-		$header['minsidebar'] = 1;
 		if (!empty($data['tahun_anggaran']))
 		{
-			$this->load->view('header', $header);
-			$this->load->view('nav', $nav);
-			$this->load->view('keuangan/laporan',$data);
-			$this->load->view('footer');
+			redirect("keuangan/grafik/rincian_realisasi");
 		}
 		else
 		{
@@ -52,229 +77,73 @@ class Keuangan extends Admin_Controller {
 		}
 	}
 
-	public function anggaran($tahun, $smt)
-	{
-		$sess = array(
-			'set_tahun' => $tahun,
-			'set_semester' => $smt
-		);
-		$this->session->set_userdata( $sess );
-
-
-
-		$data['data_anggaran'] = $this->keuangan_model->data_anggaran_tahun($tahun);
-		$data['data_realisasi'] = $this->keuangan_model->data_grafik_utama($tahun);
-		echo json_encode($data);
-	}
-
 	public function grafik($jenis)
 	{
+		$this->sub_modul_ini = 203;
+
 		$data['tahun_anggaran'] = $this->keuangan_model->list_tahun_anggaran();
 		$tahun = $this->session->userdata('set_tahun') ? $this->session->userdata('set_tahun') : $data['tahun_anggaran'][0];
-		$semester = $this->session->userdata('set_semester') ? $this->session->userdata('set_semester') : 1;
+		$semester = $this->session->userdata('set_semester') ? $this->session->userdata('set_semester') : 0;
 		$sess = array(
 			'set_tahun' => $tahun,
 			'set_semester' => $semester
 		);
 		$this->session->set_userdata( $sess );
 		$this->load->model('keuangan_grafik_model');
-		$header = $this->header_model->get_data();
-		$nav['act_sub'] = 203;
-		$header['minsidebar'] = 1;
-		$this->load->view('header', $header);
-		$this->load->view('nav', $nav);
+		$this->set_minsidebar(1);
+
 		$smt = $this->session->userdata('set_semester');
 		$thn = $this->session->userdata('set_tahun');
 
-		switch ($jenis) {
-			case 'grafik-R-PD':
-				$this->grafik_r_pd($thn, $smt);
-				break;
+		switch ($jenis)
+		{
 			case 'grafik-RP-APBD':
-				$this->grafik_rp_apbd($thn, $smt);
-				break;
-			case 'grafik-R-BD':
-				$this->grafik_r_bd($thn, $smt);
-				break;
-			case 'grafik-R-PEMDES';
-				$this->grafik_r_pemdes($thn, $smt);
+				$this->grafik_rp_apbd($thn);
 				break;
 			case 'rincian_realisasi':
-				$this->rincian_realisasi($thn, $smt);
+				$this->rincian_realisasi($thn, 'Akhir');
 				break;
+			case 'rincian_realisasi_smt1':
+				$this->rincian_realisasi($thn, 'Semester1', $smt1=1);
+				break;
+			case 'rincian_realisasi_bidang':
+				$this->rincian_realisasi($thn, 'Akhir Bidang');
+				break;
+			case 'rincian_realisasi_smt1_bidang':
+				$this->rincian_realisasi($thn, 'Semester1 Bidang', $smt1-1);
+				break;
+
 			default:
-				$this->grafik_r_pd($thn, $smt);
+				$this->grafik_rp_apbd($thn);
 				break;
 		}
-
-		$this->load->view('footer');
 	}
 
-	private function rincian_realisasi($thn, $smt)
+	private function rincian_realisasi($thn, $judul, $smt1=false)
 	{
-		$data = $this->keuangan_grafik_model->lap_rp_apbd($smt, $thn);
+		$data = $this->keuangan_grafik_model->lap_rp_apbd($thn, $smt1);
 		$data['tahun_anggaran'] = $this->keuangan_model->list_tahun_anggaran();
-		$this->load->view('keuangan/rincian_realisasi', $data);
+		$data['ta'] = $this->session->userdata('set_tahun');
+		$data['sm'] = $smt1 ? '1' : '2';
+		$_SESSION['submenu'] = "Laporan Keuangan " . $judul;
+		$this->render('keuangan/rincian_realisasi', $data);
 	}
 
-	private function grafik_r_pd($thn, $smt)
+	private function grafik_rp_apbd($thn)
 	{
-		$data = $this->keuangan_grafik_model->r_pd($smt, $thn);
-		$jp = array();
-		foreach ($data['jenis_pendapatan'] as $b)
-		{
-			$jp[] = "'". $b['Nama_Jenis']. "'";
-		}
-		$anggaran = array();
-		foreach ($data['anggaran'] as $a)
-		{
-			$anggaran[] = $a['Pagu'];
-		}
-		$realisasi = array();
-		foreach ($data['realisasi'] as $r)
-		{
-			if(!empty($r['Nilai']) || !is_null($r['Nilai']))
-			{
-				$realisasi[] =  $r['Nilai'];
-			}
-			else
-			{
-				$realisasi[] =  0;
-			}
-		}
-		$data_chart = array(
-			'type' => $jenis,
-			'smt' => $smt,
-			'thn' => $thn,
-			'jp' => $jp,
-			'anggaran' => $anggaran,
-			'realisasi' => $realisasi,
-			'tahun_anggaran' => $this->keuangan_model->list_tahun_anggaran()
-		);
-		$this->load->view('keuangan/grafik_r_pd', $data_chart);
-	}
-
-	private function grafik_rp_apbd($thn, $smt)
-	{
-		$data = $this->keuangan_grafik_model->rp_apbd($smt, $thn);
-		$jenisbelanja = array();
-		foreach ($data['jenis_belanja'] as $j)
-		{
-			$jenisbelanja[] = "'". $j['Nama_Akun']. "'";
-		}
-		$anggaran = array();
-		foreach ($data['anggaran'] as $p)
-		{
-			$anggaran[] = $p['AnggaranStlhPAK'];
-		}
-		$realisasi = array();
-		foreach ($data['realisasi'] as $s)
-		{
-			if(!empty($s['Nilai']) || !is_null($s['Nilai']))
-			{
-				$realisasi[] =  $s['Nilai'];
-			}
-			else
-			{
-				$realisasi[] =  0;
-			}
-		}
-		$data_chart = array(
-			'type' => $jenis,
-			'smt' => $smt,
-			'thn' => $thn,
-			'jenisbelanja' => $jenisbelanja,
-			'anggaran' => $anggaran,
-			'realisasi' => $realisasi,
-			'tahun_anggaran' => $this->keuangan_model->list_tahun_anggaran()
-		);
-		$this->load->view('keuangan/grafik_rp_apbd', $data_chart);
-	}
-
-	private function grafik_r_bd($thn, $smt)
-	{
-		$data = $this->keuangan_grafik_model->r_bd($smt, $thn);
-		$bidang = array();
-		foreach ($data['bidang'] as $b)
-		{
-			$bidang[] = "'". $b['Nama_Bidang']. "'";
-		}
-		$anggaran = array();
-		foreach ($data['anggaran'] as $a)
-		{
-			$anggaran[] = $a['Pagu'];
-		}
-		$realisasi = array();
-		foreach ($data['realisasi'] as $r)
-		{
-			if(!empty($r['Nilai']) || !is_null($r['Nilai']))
-			{
-				$realisasi[] =  $r['Nilai'];
-			}
-			else
-			{
-				$realisasi[] =  0;
-			}
-		}
-		$data_chart = array(
-			'type' => $jenis,
-			'smt' => $smt,
-			'thn' => $thn,
-			'bidang' => $bidang,
-			'anggaran' => $anggaran,
-			'realisasi' => $realisasi,
-			'tahun_anggaran' => $this->keuangan_model->list_tahun_anggaran()
-		);
-		$this->load->view('keuangan/grafik_r_bd', $data_chart);
-	}
-
-	private function grafik_r_pemdes($thn, $smt)
-	{
-		$data = $this->keuangan_grafik_model->r_pembiayaan($smt, $thn);
-		$pembiayaan = array();
-		foreach ($data['pembiayaan'] as $d)
-		{
-			$pembiayaan[] = "'". $d['Nama_Kelompok']. "'";
-		}
-		$anggaran = array();
-		foreach ($data['anggaran'] as $a)
-		{
-			$anggaran[] = $a['Pagu'];
-		}
-		$realisasi = array();
-		foreach ($data['realisasi'] as $r)
-		{
-			if(!empty($r['Nilai']) || !is_null($r['Nilai']))
-			{
-				$realisasi[] =  $r['Nilai'];
-			}
-			else
-			{
-				$realisasi[] =  0;
-			}
-		}
-		$data_chart = array(
-			'type' => $jenis,
-			'smt' => $smt,
-			'thn' => $thn,
-			'pembiayaan' => $pembiayaan,
-			'anggaran' => $anggaran,
-			'realisasi' => $realisasi,
-			'tahun_anggaran' => $this->keuangan_model->list_tahun_anggaran()
-		);
-		$this->load->view('keuangan/grafik_r_pemdes', $data_chart);
+		$data = $this->keuangan_grafik_model->grafik_keuangan_tema($thn);
+		$data['tahun_anggaran'] = $this->keuangan_model->list_tahun_anggaran();
+		$_SESSION['submenu'] = "Grafik Keuangan";
+		$this->render('keuangan/grafik_rp_apbd', $data);
 	}
 
 	public function impor_data()
 	{
+		$this->sub_modul_ini = 202;
 		$data['main'] = $this->keuangan_model->list_data();
 		$data['form_action'] = site_url("keuangan/proses_impor");
-		$header = $this->header_model->get_data();
-		$nav['act_sub'] = 202;
-		$this->load->view('header', $header);
-		$this->load->view('nav', $nav);
-		$this->load->view('keuangan/impor_data', $data);
-		$this->load->view('footer');
+
+		$this->render('keuangan/impor_data', $data);
 	}
 
 	public function proses_impor()
@@ -341,9 +210,20 @@ class Keuangan extends Admin_Controller {
 	public function delete($id = '')
 	{
 		$this->redirect_hak_akses('h', 'keuangan');
-		$_SESSION['success'] = 1;
 		$outp = $this->keuangan_model->delete($id);
-		if (!$outp) $_SESSION['success'] = -1;
+		redirect('keuangan/impor_data');
+	}
+
+	public function pilih_desa($id_master)
+	{
+		$data['desa_ganda'] = $this->keuangan_model->cek_desa($id_master);
+		$data['id_master'] = $id_master;
+		$this->load->view('keuangan/pilih_desa', $data);
+	}
+
+	public function bersihkan_desa($id_master)
+	{
+		$this->keuangan_model->bersihkan_desa($id_master, $this->input->post('kode_desa'));
 		redirect('keuangan/impor_data');
 	}
 }

@@ -169,30 +169,26 @@
 	padding: 7px;
 }
 
-@media (max-width:480px)
-{
-	.selecta, .inputa
-	{
+@media (max-width:480px) {
+	.selecta, .inputa {
 		width:150px
 	}
-	.form-group
-	{
-    margin-bottom: 0px;
+
+	.form-group {
+		margin-bottom: 10px;
 	}
-	.leaflet-control-layers-expanded
-	{
+
+	.leaflet-control-layers-expanded {
 		display:none;
 	}
-	}
 }
-@media (max-width:767px)
-{
-	.selecta, .inputa
-	{
+
+@media (max-width:767px) {
+	.selecta, .inputa {
 		width:150px
 	}
 	.form-group {
-    margin-bottom: 0px;
+		margin-bottom: 10px;
 	}
 }
 /* Modifikasi Select2 --- */
@@ -353,20 +349,20 @@ img { margin-bottom: 5px; }
 
 /* Notif */
 .badge {
-  display: inline-block;
+	display: inline-block;
 	min-width: 10px;
 	padding: 4px;
-	margin-left: 3px;
+	margin-left: -10px;
 	font-size: 10px;
 	font-weight: normal;
-	margin-top: -11px;
+	margin-top: -10px;
 	line-height: 0.5;
 	color: #fff;
 	text-align: center;
 	white-space: nowrap;
 	vertical-align: middle;
 	background-color: #ff0505;
-	border-radius: 6px
+	border-radius: 6px;
 }
 
 /* Penduduk */
@@ -417,5 +413,77 @@ Warna Bar Realisasi
 	stroke: #2b2b29; /*warna tooltip pada bar lebih gelap agar terlihat*/
 }
 
+/* Manual input anggaran */
+.rupiah {
+	text-align: right;
+}
 
+/*
+Agar Logo Desa di menu navigasi Admin di sisi kiri tidak terlalu rapat ke kiri
+*/
+.main-sidebar .pull-left.image {
+	padding: 0px 10px 10px 10px;
+}
+
+th.padat, td.padat {
+	width: 1%;
+	white-space: nowrap;
+	text-align: center;
+}
+
+td.aksi {
+	width: 1%;
+	white-space: nowrap;
+	text-align: left;
+}
+
+.tabel-rincian, th, td {
+	height: 30px;
+	padding: 5px;
+}
+
+.tabel-daftar > thead > tr > th {
+	text-align: center;
+	white-space: nowrap;
+	text-transform: uppercase;
+}
+
+textarea {
+	resize: none;
+}
+
+.input-sm {
+	padding: 4px 4px;
+}
+
+@media (max-width:780px) {
+	.btn-group-vertical {
+		display: block;
+	}
+}
+
+select.select2 {
+	width: 100%;
+}
+
+/* Supaya select2 tampil serasi di ukuran layar berbeda */
+span.select2.select2-container {
+	width: 100% !important;
+}
+
+.input-sm {
+	padding: 4px 4px;
+}
+
+/* Untuk datetimepicker */
+
+.bootstrap-datetimepicker-widget .datepicker-months .table-condensed,
+.bootstrap-datetimepicker-widget .datepicker-years .table-condensed,
+.bootstrap-datetimepicker-widget .datepicker-decades .table-condensed {
+	width: 100%;
+}
+
+.datepicker table tr td span.decade {
+	width: 100%;
+}
 

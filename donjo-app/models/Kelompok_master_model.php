@@ -1,5 +1,5 @@
 <?php
-class Kelompok_master_model extends CI_Model {
+class Kelompok_master_model extends MY_Model {
 
 	public function __construct()
 	{
@@ -8,8 +8,7 @@ class Kelompok_master_model extends CI_Model {
 
 	public function autocomplete()
 	{
-		$str = autocomplete_str('kelompok', 'kelompok_master');
-		return $str;
+		return $this->autocomplete_str('kelompok', 'kelompok_master');
 	}
 
 	private function search_sql()
@@ -80,8 +79,7 @@ class Kelompok_master_model extends CI_Model {
 		$data = $_POST;
 		$outp = $this->db->insert('kelompok_master', $data);
 
-		if ($outp) $_SESSION['success'] = 1;
-		else $_SESSION['success'] = -1;
+		status_sukses($outp); //Tampilkan Pesan
 	}
 
 	public function update($id=0)
@@ -89,35 +87,27 @@ class Kelompok_master_model extends CI_Model {
 		$data = $_POST;
 		$this->db->where('id', $id);
 		$outp = $this->db->update('kelompok_master', $data);
-		if ($outp) $_SESSION['success'] = 1;
-		else $_SESSION['success'] = -1;
+		status_sukses($outp); //Tampilkan Pesan
 	}
 
-	public function delete($id='')
+	public function delete($id='', $semua=false)
 	{
-		$sql = "DELETE FROM kelompok_master WHERE id = ?";
-		$outp = $this->db->query($sql,array($id));
+		if (!$semua) $this->session->success = 1;
 
-		if ($outp) $_SESSION['success'] = 1;
-		else $_SESSION['success'] = -1;
+		$outp = $this->db->where('id', $id)->delete('kelompok_master');
+
+		status_sukses($outp, $gagal_saja=true); //Tampilkan Pesan
 	}
 
 	public function delete_all()
 	{
+		$this->session->success = 1;
+
 		$id_cb = $_POST['id_cb'];
-
-		if (count($id_cb))
+		foreach ($id_cb as $id)
 		{
-			foreach ($id_cb as $id)
-			{
-				$sql = "DELETE FROM kelompok_master WHERE id = ?";
-				$outp = $this->db->query($sql,array($id));
-			}
+			$this->delete($id, $semua=true);
 		}
-		else $outp = false;
-
-		if ($outp) $_SESSION['success'] = 1;
-		else $_SESSION['success'] = -1;
 	}
 
 	public function get_kelompok_master($id=0)

@@ -109,8 +109,10 @@
 		return $hasil_rupiah;
 	}
 
-	function jecho($a,$b,$str){
-		if($a==$b){
+	function jecho($a, $b, $str)
+	{
+		if ($a == $b)
+		{
 			echo $str;
 		}
 	}
@@ -167,95 +169,21 @@
 		return $str;
 	}
 
-	function bulan($bln){
-		$nm = '';
-		switch($bln){
-			case '1':
-				$nm = 'Januari';
-				break;
-			case '2':
-				$nm = 'Februari';
-				break;
-			case '3':
-				$nm = 'Maret';
-				break;
-			case '4':
-				$nm = 'April';
-				break;
-			case '5':
-				$nm = 'Mei';
-				break;
-			case '6':
-				$nm = 'Juni';
-				break;
-			case '7':
-				$nm = 'Juli';
-				break;
-			case '8':
-				$nm = 'Agustus';
-				break;
-			case '9':
-				$nm = 'September';
-				break;
-			case '10':
-				$nm = 'Oktober';
-				break;
-			case '11':
-				$nm = 'November';
-				break;
-			case '12':
-				$nm = 'Desember';
-				break;
-			default:
-				$nm = '';
-				break;
-		}
-		return $nm;
+	function bulan($bln)
+	{
+		$bulan = array(1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember');
+		return $bulan[(int)$bln];
 	}
 
-	function nama_bulan($tgl){
-		$ar=explode('-',$tgl);
+	function getBulan($bln)
+	{
+		return bulan($bln);
+	}
 
-		$nm = '';
-		switch($ar[1]){
-			case '01':
-				$nm = 'Januari';
-				break;
-			case '02':
-				$nm = 'Februari';
-				break;
-			case '03':
-				$nm = 'Maret';
-				break;
-			case '04':
-				$nm = 'April';
-				break;
-			case '05':
-				$nm = 'Mei';
-				break;
-			case '06':
-				$nm = 'Juni';
-				break;
-			case '07':
-				$nm = 'Juli';
-				break;
-			case '08':
-				$nm = 'Agustus';
-				break;
-			case '09':
-				$nm = 'September';
-				break;
-			case '10':
-				$nm = 'Oktober';
-				break;
-			case '11':
-				$nm = 'November';
-				break;
-			case '12':
-				$nm = 'Desember';
-				break;
-		}
-
+	function nama_bulan($tgl)
+	{
+		$ar = explode('-', $tgl);
+		$nm = bulan($ar[1]);
 		$o = $ar[0] .' '. $nm .' '. $ar[2];
 		return $o;
 	}
@@ -355,63 +283,21 @@
 
 	function waktu_ind($time){
 		$str ="";
-			if(($time/360)>1){
-				$jam = ($time/360);
-				$jam = explode('.',$jam);
-				$str .= $jam." Jam ";
-			}
-			if(($time/60)>1){
-				$menit = ($time/60);
-				$menit = explode('.',$menit);
-				$str .= $menit[0]." Menit ";
-			}
-			$detik = $time%60;
-			$str .= $detik;
-
-			return $str.' Detik';
-	}
-
-	function getBulan($bln){
-				switch ($bln){
-					case 1:
-						return "Januari";
-						break;
-					case 2:
-						return "Februari";
-						break;
-					case 3:
-						return "Maret";
-						break;
-					case 4:
-						return "April";
-						break;
-					case 5:
-						return "Mei";
-						break;
-					case 6:
-						return "Juni";
-						break;
-					case 7:
-						return "Juli";
-						break;
-					case 8:
-						return "Agustus";
-						break;
-					case 9:
-						return "September";
-						break;
-					case 10:
-						return "Oktober";
-						break;
-					case 11:
-						return "November";
-						break;
-					case 12:
-						return "Desember";
-						break;
-				}
-
+		if(($time/360)>1){
+			$jam = ($time/360);
+			$jam = explode('.',$jam);
+			$str .= $jam." Jam ";
 		}
+		if(($time/60)>1){
+			$menit = ($time/60);
+			$menit = explode('.',$menit);
+			$str .= $menit[0]." Menit ";
+		}
+		$detik = $time%60;
+		$str .= $detik;
+
+		return $str.' Detik';
+	}
 
 //time out
 function timer(){
@@ -450,17 +336,19 @@ function mandiri_timeout(){
 }
 
 //time out Admin set 3 login per 5 menit
-function siteman_timer(){
-	$time=300;  //300 detik
+function siteman_timer()
+{
+	$time = 300;  //300 detik
 	$_SESSION['siteman_try'] = 4;
-	$_SESSION['siteman_wait']=0;
-	$_SESSION['siteman_timeout']=time()+$time;
+	$_SESSION['siteman_timeout'] = time() + $time;
 }
 
-function siteman_timeout(){
-	(isset($_SESSION['siteman_timeout'])) ? $timeout=$_SESSION['siteman_timeout'] : $timeout = null;
-	if(time()>$timeout){
-		siteman_timer();
+function siteman_timeout()
+{
+	$timeout = (isset($_SESSION['siteman_timeout'])) ? $_SESSION['siteman_timeout'] : null;
+	if (time() > $timeout)
+	{
+		$_SESSION['siteman_wait'] = 0;
 	}
 }
 
@@ -656,4 +544,39 @@ function comma($number)
 	}
 	return $results;
 }
+
+function hit($angka)
+{
+	$hit = ($angka === NULL OR $angka === '') ? '0' : ribuan($angka);
+
+	return $hit." Kali";
+}
+
+function ribuan($angka)
+{
+	return number_format($angka, 0, '.', '.');
+}
+
+// Kalau angka romawi jangan ubah
+function set_ucwords($data)
+{
+	if (is_angka_romawi($data)) return $data;
+	return ucwords(strtolower($data));
+}
+
+function persen($data)
+{
+	return is_nan($data) ? '0%' : number_format($data*100, 2, '.', '').'%';
+}
+
+function sensor_nik_kk($data)
+{
+	$count = strlen($data);
+	if ($count <= 10) return null;
+
+	$output = substr_replace($data, str_repeat('X', $count - 7), 8, $count - 7);
+	return $output;
+}
+
+
 // =======================================

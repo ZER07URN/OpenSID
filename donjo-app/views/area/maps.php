@@ -1,3 +1,48 @@
+<?php
+/**
+ * File ini:
+ *
+ * View di modul Pemetaan
+ *
+ * /donjo-app/views/area/maps.php
+ *
+ */
+
+/**
+ *
+ * File ini bagian dari:
+ *
+ * OpenSID
+ *
+ * Sistem informasi desa sumber terbuka untuk memajukan desa
+ *
+ * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
+ *
+ * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ *
+ * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
+ * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
+ * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
+ * asal tunduk pada syarat berikut:
+
+ * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
+ * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
+ * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
+
+ * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
+ * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
+ * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
+ *
+ * @package OpenSID
+ * @author  Tim Pengembang OpenDesa
+ * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
+ * @copyright Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @license http://www.gnu.org/licenses/gpl.html  GPL V3
+ * @link  https://github.com/OpenSID/OpenSID
+ */
+?>
+
 <style>
   #map
   {
@@ -72,244 +117,78 @@
   	//Inisialisasi tampilan peta
   	var peta_area = L.map('map').setView(posisi, zoom);
 
-  	//Menampilkan BaseLayers Peta
-  	var defaultLayer = L.tileLayer.provider('OpenStreetMap.Mapnik').addTo(peta_area);
+    //1. Menampilkan overlayLayers Peta Semua Wilayah
+    var marker_desa = [];
+    var marker_dusun = [];
+    var marker_rw = [];
+    var marker_rt = [];
 
-  	var baseLayers = {
-  		'OpenStreetMap': defaultLayer,
-  		'OpenStreetMap H.O.T.': L.tileLayer.provider('OpenStreetMap.HOT'),
-  		'Mapbox Streets' : L.tileLayer('https://api.mapbox.com/v4/mapbox.streets/{z}/{x}/{y}@2x.png?access_token=<?=$this->setting->google_key?>', {attribution: '<a href="https://www.mapbox.com/about/maps">© Mapbox</a> <a href="https://openstreetmap.org/copyright">© OpenStreetMap</a> | <a href="https://mapbox.com/map-feedback/">Improve this map</a>'}),
-  		'Mapbox Outdoors' : L.tileLayer('https://api.mapbox.com/v4/mapbox.outdoors/{z}/{x}/{y}@2x.png?access_token=<?=$this->setting->google_key?>', {attribution: '<a href="https://www.mapbox.com/about/maps">© Mapbox</a> <a href="https://openstreetmap.org/copyright">© OpenStreetMap</a> | <a href="https://mapbox.com/map-feedback/">Improve this map</a>'}),
-  		'Mapbox Streets Satellite' : L.tileLayer('https://api.mapbox.com/v4/mapbox.streets-satellite/{z}/{x}/{y}@2x.png?access_token=<?=$this->setting->google_key?>', {attribution: '<a href="https://www.mapbox.com/about/maps">© Mapbox</a> <a href="https://openstreetmap.org/copyright">© OpenStreetMap</a> | <a href="https://mapbox.com/map-feedback/">Improve this map</a>'}),
-  	};
+    //OVERLAY WILAYAH DESA
+    <?php if (!empty($desa['path'])): ?>
+      set_marker_desa(marker_desa, <?=json_encode($desa)?>, "<?=ucwords($this->setting->sebutan_desa).' '.$desa['nama_desa']?>", "<?= favico_desa()?>");
+    <?php endif; ?>
+
+    //OVERLAY WILAYAH DUSUN
+    <?php if (!empty($dusun_gis)): ?>
+      set_marker(marker_dusun, '<?=addslashes(json_encode($dusun_gis))?>', '#FFFF00', '<?=ucwords($this->setting->sebutan_dusun)?>', 'dusun');
+    <?php endif; ?>
+
+    //OVERLAY WILAYAH RW
+    <?php if (!empty($rw_gis)): ?>
+      set_marker(marker_rw, '<?=addslashes(json_encode($rw_gis))?>', '#8888dd', 'RW', 'rw');
+    <?php endif; ?>
+
+    //OVERLAY WILAYAH RT
+    <?php if (!empty($rt_gis)): ?>
+      set_marker(marker_rt, '<?=addslashes(json_encode($rt_gis))?>', '#008000', 'RT', 'rt');
+    <?php endif; ?>
+
+    //Menampilkan overlayLayers Peta Semua Wilayah
+    <?php if (!empty($wil_atas['path'])): ?>
+      var overlayLayers = overlayWil(marker_desa, marker_dusun, marker_rw, marker_rt);
+    <?php else: ?>
+      var overlayLayers = {};
+    <?php endif; ?>
+
+    //Menampilkan BaseLayers Peta
+    var baseLayers = getBaseLayers(peta_area, '<?=$this->setting->google_key?>');
 
     //Menampilkan Peta wilayah yg sudah ada
     <?php if (!empty($area['path'])): ?>
-      var daerah_wilayah = <?=$area['path']?>;
-
-      //Titik awal dan titik akhir poligon harus sama
-      daerah_wilayah[0].push(daerah_wilayah[0][0]);
-
-      var poligon_wilayah = L.polygon(daerah_wilayah).addTo(peta_area);
-      poligon_wilayah.on('pm:edit', function(e)
-      {
-        document.getElementById('path').value = getLatLong('Poly', e.target).toString();
-      })
-
-      var layer = poligon_wilayah;
-      var geojson = layer.toGeoJSON();
-      var shape_for_db = JSON.stringify(geojson);
-      var gpxData = togpx(JSON.parse(shape_for_db));
-
-      $("#exportGPX").on('click', function (event) {
-        data = 'data:text/xml;charset=utf-8,' + encodeURIComponent(gpxData);
-        $(this).attr({
-          'href': data,
-          'target': '_blank'
-        });
-      });
-
-      peta_area.panTo(poligon_wilayah.getBounds().getCenter());
-      // setTimeout(function() {peta_area.invalidateSize();peta_area.fitBounds(poligon_wilayah.getBounds());}, 500);
-
+      var wilayah = <?=$area['path']?>;
+      showCurrentArea(wilayah, peta_area);
     <?php endif; ?>
-
-    //Tombol yang akan dimunculkan di peta
-    var options =
-    {
-      position: 'topright', // toolbar position, options are 'topleft', 'topright', 'bottomleft', 'bottomright'
-      drawMarker: false, // adds button to draw markers
-      drawCircleMarker: false, // adds button to draw markers
-      drawPolyline: false, // adds button to draw a polyline
-      drawRectangle: false, // adds button to draw a rectangle
-      drawPolygon: true, // adds button to draw a polygon
-      drawCircle: false, // adds button to draw a cricle
-      cutPolygon: false, // adds button to cut a hole in a polygon
-      editMode: true, // adds button to toggle edit mode for all layers
-      removalMode: true, // adds a button to remove layers
-    };
 
     //Menambahkan zoom scale ke peta
     L.control.scale().addTo(peta_area);
 
     //Menambahkan toolbar ke peta
-    peta_area.pm.addControls(options);
+    peta_area.pm.addControls(editToolbarPoly());
 
     //Menambahkan Peta wilayah
-    peta_area.on('pm:create', function(e)
-    {
-      var type = e.layerType;
-      var layer = e.layer;
-      var latLngs;
+    addPetaPoly(peta_area);
 
-      if (type === 'circle') {
-        latLngs = layer.getLatLng();
-      }
-      else
-      latLngs = layer.getLatLngs();
+    //Export/Import Peta dari file GPX
+    L.Control.FileLayerLoad.LABEL = '<img class="icon" src="<?= base_url()?>assets/images/gpx.png" alt="file icon"/>';
+    L.Control.FileLayerLoad.TITLE = 'Impor GPX/KML';
+    control = eximGpxPoly(peta_area);
 
-      var p = latLngs;
-      var polygon = L.polygon(p, { color: '#A9AAAA', weight: 4, opacity: 1 }).addTo(peta_area);
-
-      polygon.on('pm:edit', function(e)
-      {
-        document.getElementById('path').value = getLatLong('Poly', e.target).toString();
-      });
-
-      peta_area.fitBounds(polygon.getBounds());
-    });
-
-    //Unggah Peta dari file GPX/KML
-    var style = {
-      color: 'red',
-      opacity: 1.0,
-      fillOpacity: 1.0,
-      weight: 2,
-      clickable: true
-    };
-
-    L.Control.FileLayerLoad.LABEL = '<img class="icon" src="<?= base_url()?>assets/images/folder.svg" alt="file icon"/>';
-
-    control = L.Control.fileLayerLoad({
-      addToMap: false,
-      formats: [
-        '.gpx',
-        '.geojson'
-      ],
-      fitBounds: true,
-      layerOptions: {
-        style: style,
-        pointToLayer: function (data, latlng) {
-          return L.circleMarker(
-            latlng,
-            { style: style }
-          );
-        },
-
-      }
-    });
-    control.addTo(peta_area);
-
-    control.loader.on('data:loaded', function (e) {
-      var type = e.layerType;
-      var layer = e.layer;
-      var coords=[];
-      var geojson = layer.toGeoJSON();
-      var options = {tolerance: 0.0001, highQuality: false};
-      var simplified = turf.simplify(geojson, options);
-      var shape_for_db = JSON.stringify(geojson);
-      var gpxData = togpx(JSON.parse(shape_for_db));
-
-      $("#exportGPX").on('click', function (event) {
-        data = 'data:text/xml;charset=utf-8,' + encodeURIComponent(gpxData);
-
-        $(this).attr({
-          'href': data,
-          'target': '_blank'
-        });
-
-      });
-
-      var polygon =
-      //L.geoJson(JSON.parse(shape_for_db), { //jika ingin koordinat tidak dipotong/simplified
-      L.geoJson(simplified, {
-        pointToLayer: function (feature, latlng) {
-          return L.circleMarker(latlng, { style: style });
-        },
-        onEachFeature: function (feature, layer) {
-          coords.push(feature.geometry.coordinates);
-        },
-
-      }).addTo(peta_area);
-
-      var jml = coords[0].length;
-      coords[0].push(coords[0][0]);
-      for (var x = 0; x < jml; x++)
-      {
-        coords[0][x].reverse();
-      }
-
-      polygon.on('pm:edit', function(e)
-      {
-        document.getElementById('path').value = JSON.stringify(coords);
-      });
-
-      document.getElementById('path').value = JSON.stringify(coords);
-      peta_area.fitBounds(polygon.getBounds());
-    });
+    //Import Peta dari file SHP
+    eximShp(peta_area);
 
     //Geolocation IP Route/GPS
-  	var lc = L.control.locate({
-  		icon: 'fa fa-map-marker',
-      locateOptions: {enableHighAccuracy: true},
-      strings: {
-          title: "Lokasi Saya",
-  				popup: "Anda berada di sekitar {distance} {unit} dari titik ini"
-      }
-
-  	}).addTo(peta_area);
-
-  	peta_area.on('locationfound', function(e) {
-  	    peta_area.setView(e.latlng)
-  	});
-
-    peta_area.on('startfollowing', function() {
-      peta_area.on('dragstart', lc._stopFollowing, lc);
-  	}).on('stopfollowing', function() {
-      peta_area.off('dragstart', lc._stopFollowing, lc);
-  	});
+  	geoLocation(peta_area);
 
     //Menghapus Peta wilayah
-    peta_area.on('pm:globalremovalmodetoggled', function(e)
-    {
-      document.getElementById('path').value = '';
-    })
+    hapusPeta(peta_area);
 
-    L.control.layers(baseLayers, null, {position: 'topleft', collapsed: true}).addTo(peta_area);
+    // Menampilkan OverLayer Area, Garis, Lokasi
+    layerCustom = tampilkan_layer_area_garis_lokasi(peta_area, '<?=addslashes(json_encode($all_area))?>', '<?=addslashes(json_encode($all_garis))?>', '<?=addslashes(json_encode($all_lokasi))?>', '<?= base_url().LOKASI_SIMBOL_LOKASI?>', '<?= base_url().LOKASI_FOTO_AREA?>', '<?= base_url().LOKASI_FOTO_GARIS?>', '<?= base_url().LOKASI_FOTO_LOKASI?>');
 
-    //Fungsi
-    function getLatLong(x, y)
-    {
-      var hasil;
-      if (x == 'Rectangle' || x == 'Line' || x == 'Poly')
-      {
-        hasil = JSON.stringify(y._latlngs);
-      }
-      else
-      {
-        hasil = JSON.stringify(y._latlng);
-      }
-      hasil = hasil.replace(/\}/g, ']').replace(/(\{)/g, '[').replace(/(\"lat\"\:|\"lng\"\:)/g, '');
-      return hasil;
-    }
+    L.control.layers(baseLayers, overlayLayers, {position: 'topleft', collapsed: true}).addTo(peta_area);
+    L.control.groupedLayers('', layerCustom, {groupCheckboxes: true, position: 'topleft', collapsed: true}).addTo(peta_area);
 
   }; //EOF window.onload
-</script>
-<script>
-	$(document).ready(function(){
-		$('#resetme').click(function(){
-			$("#validasi1").validate({
-				errorElement: "label",
-				errorClass: "error",
-				highlight:function (element){
-					$(element).closest(".form-group").addClass("has-error");
-				},
-				unhighlight:function (element){
-					$(element).closest(".form-group").removeClass("has-error");
-				},
-				errorPlacement: function (error, element) {
-					if (element.parent('.input-group').length) {
-						error.insertAfter(element.parent());
-					} else {
-						error.insertAfter(element);
-					}
-				}
-			});
-
-			window.location.reload(false);
-
-		});
-	});
 </script>
 <script src="<?= base_url()?>assets/js/leaflet.filelayer.js"></script>
 <script src="<?= base_url()?>assets/js/togeojson.js"></script>
